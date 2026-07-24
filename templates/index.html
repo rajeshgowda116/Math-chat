@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math AI Chatbot</title>
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Math AI Chatbot</h1>
+    <p class="subtitle">Ask any Mathematics Question</p>
+
+    <div id="chat-box"></div>
+
+    <div class="input-area">
+        <textarea
+            id="question"
+            placeholder="Example: Solve x^2 + 5x + 6 = 0"
+        ></textarea>
+
+        <button onclick="sendMessage()">
+            Send
+        </button>
+    </div>
+
+</div>
+
+<script>
+
+async function sendMessage(){
+
+    const question = document.getElementById("question").value.trim();
+
+    if(question===""){
+        alert("Please enter a question");
+        return;
+    }
+
+    const chatBox=document.getElementById("chat-box");
+
+    chatBox.insertAdjacentHTML("beforeend", `
+        <div class="user-message">
+            <strong>You:</strong><br>${escapeHtml(question)}
+        </div>
+    `);
+
+    document.getElementById("question").value="";
+
+    chatBox.scrollTop=chatBox.scrollHeight;
+
+    try{
+
+        const response=await fetch("/chat",{
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+                question:question
+            })
+
+        });
+
+        const data=await response.json();
+
+        if(!response.ok){
+            throw new Error(data.detail || "Unable to get an answer.");
+        }
+
+        chatBox.insertAdjacentHTML("beforeend", `
+            <div class="bot-message">
+                <strong>Math Bot:</strong><br>
+                ${escapeHtml(data.answer).replace(/\n/g,"<br>")}
+            </div>
+        `);
+
+        chatBox.scrollTop=chatBox.scrollHeight;
+
+    }
+
+    catch(error){
+
+        chatBox.insertAdjacentHTML("beforeend", `
+            <div class="bot-message error">
+                ${escapeHtml(error.message)}
+            </div>
+        `);
+
+    }
+
+}
+
+function escapeHtml(value){
+    return value
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
+}
+
+document.getElementById("question").addEventListener("keypress",function(e){
+
+    if(e.key==="Enter" && !e.shiftKey){
+
+        e.preventDefault();
+
+        sendMessage();
+
+    }
+
+});
+
+</script>
+
+</body>
+</html>
