@@ -218,10 +218,12 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            width: 100%;
             height: 64px;
             padding: 0 16px;
             border: 1px solid var(--line);
             border-radius: 10px;
+            color: var(--text);
             background: rgba(10, 21, 40, 0.86);
         }
 
@@ -237,6 +239,7 @@
             position: relative;
             width: 46px;
             height: 28px;
+            flex: 0 0 auto;
             border-radius: 99px;
             background: linear-gradient(90deg, #6860f6, #796fff);
         }
@@ -251,6 +254,105 @@
             border-radius: 50%;
             background: #fff;
             box-shadow: 0 1px 10px rgba(255, 255, 255, 0.45);
+        }
+
+        body.light-mode {
+            --bg: #f2f5fb;
+            --line: rgba(92, 108, 135, 0.24);
+            --text: #111827;
+            --muted: #5d687b;
+            --muted-2: #6b7280;
+            --icon: #4b5563;
+            --shadow: rgba(75, 85, 99, 0.16);
+            color: var(--text);
+            background:
+                radial-gradient(circle at 49% 32%, rgba(105, 117, 255, 0.11), transparent 33%),
+                linear-gradient(135deg, #f8fbff 0%, #edf2f9 50%, #f6f8fc 100%);
+        }
+
+        body.light-mode .app {
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(241, 245, 251, 0.94)),
+                var(--bg);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 22px 60px rgba(75, 85, 99, 0.16);
+        }
+
+        body.light-mode .sidebar {
+            background: linear-gradient(180deg, rgba(247, 250, 255, 0.98), rgba(235, 241, 250, 0.98));
+        }
+
+        body.light-mode .bot-tile,
+        body.light-mode .avatar {
+            background: rgba(255, 255, 255, 0.78);
+            border-color: rgba(92, 108, 135, 0.24);
+        }
+
+        body.light-mode .brand p,
+        body.light-mode .headline h2 span {
+            color: #5b55e8;
+        }
+
+        body.light-mode .new-chat,
+        body.light-mode .send,
+        body.light-mode .user-bubble {
+            background: linear-gradient(135deg, #6860f6, #4f46e5);
+        }
+
+        body.light-mode .history-item {
+            color: #1f2937;
+        }
+
+        body.light-mode .history-item:hover,
+        body.light-mode .history-item.active {
+            background: rgba(219, 226, 239, 0.9);
+        }
+
+        body.light-mode .mode-card,
+        body.light-mode .composer-box {
+            background: rgba(255, 255, 255, 0.82);
+        }
+
+        body.light-mode .toggle {
+            background: #cbd5e1;
+        }
+
+        body.light-mode .toggle::after {
+            right: 23px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(75, 85, 99, 0.22);
+        }
+
+        body.light-mode .main {
+            background:
+                radial-gradient(circle at 68% 20%, rgba(105, 117, 255, 0.09), transparent 35%),
+                rgba(246, 249, 253, 0.74);
+        }
+
+        body.light-mode .headline p,
+        body.light-mode .empty-state,
+        body.light-mode .notice {
+            color: #64748b;
+        }
+
+        body.light-mode .empty-state h3,
+        body.light-mode .solution {
+            color: #111827;
+        }
+
+        body.light-mode .assistant-bubble {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(242, 246, 252, 0.96));
+        }
+
+        body.light-mode textarea {
+            color: #111827;
+        }
+
+        body.light-mode textarea::placeholder {
+            color: #7a8597;
+        }
+
+        body.light-mode .cursor {
+            color: #4f46e5;
         }
 
         .main {
@@ -286,20 +388,6 @@
             margin-top: 9px;
             color: #b5bed1;
             font-size: 18px;
-        }
-
-        .help {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            height: 54px;
-            padding: 0 19px;
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            color: #d7deed;
-            background: rgba(29, 42, 69, 0.82);
-            font-size: 16px;
-            box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.02);
         }
 
         .conversation {
@@ -595,10 +683,6 @@
                 font-size: 34px;
             }
 
-            .help {
-                display: none;
-            }
-
             .user-bubble {
                 width: min(735px, 84%);
             }
@@ -694,13 +778,13 @@
             </div>
 
             <div class="mode">
-                <div class="mode-card">
+                <button class="mode-card" id="theme-toggle" type="button" aria-pressed="true">
                     <div class="mode-label">
                         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8z"/><path d="M19 3v4M21 5h-4"/></svg>
-                        <span>Dark Mode</span>
+                        <span id="theme-label">Dark Mode</span>
                     </div>
                     <span class="toggle" aria-hidden="true"></span>
-                </div>
+                </button>
             </div>
         </aside>
 
@@ -710,10 +794,6 @@
                     <h2>Math AI <span>Chatbot</span></h2>
                     <p>Your personal mathematics tutor. Ask anything!</p>
                 </div>
-                <button class="help" type="button">
-                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.6 2.6 0 0 1 4.9 1.2c0 1.9-2.7 2.1-2.7 4"/><path d="M12 17.5h.01"/></svg>
-                    <span>How it works?</span>
-                </button>
             </header>
 
             <section class="conversation">
@@ -744,11 +824,15 @@
         const sendButton = form.querySelector(".send");
         const newChatButton = document.querySelector(".new-chat");
         const historyList = document.getElementById("history-list");
+        const themeToggle = document.getElementById("theme-toggle");
+        const themeLabel = document.getElementById("theme-label");
         let typingTimer = null;
         let activeSessionId = null;
 
+        applyTheme(localStorage.getItem("theme") || "dark");
         form.addEventListener("submit", sendMessage);
         newChatButton.addEventListener("click", createNewChat);
+        themeToggle.addEventListener("click", toggleTheme);
         input.addEventListener("keydown", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
@@ -1093,6 +1177,19 @@
             } catch (error) {
                 alert(error.message);
             }
+        }
+
+        function toggleTheme() {
+            const nextTheme = document.body.classList.contains("light-mode") ? "dark" : "light";
+            applyTheme(nextTheme);
+            localStorage.setItem("theme", nextTheme);
+        }
+
+        function applyTheme(theme) {
+            const isLight = theme === "light";
+            document.body.classList.toggle("light-mode", isLight);
+            themeToggle.setAttribute("aria-pressed", String(!isLight));
+            themeLabel.textContent = isLight ? "Light Mode" : "Dark Mode";
         }
 
         async function readResponse(response) {
