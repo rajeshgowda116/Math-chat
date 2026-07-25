@@ -115,7 +115,8 @@ This application includes a `render.yaml` blueprint file for easy deployment on 
 4. Configure the service settings:
    - **Environment**: `Python`
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app:app --host 0.0.0.0 --port $PORT`
+   - **Start Command**: `gunicorn -k uvicorn.workers.UvicornWorker app:app` (or `uvicorn app:app --host 0.0.0.0 --port $PORT`)
+
 5. Under **Environment Variables**, add:
    - `GEMINI_API_KEY`: Your Google Gemini API Key
    - `DATABASE_URL` *(Optional)*: URL for external/Render PostgreSQL database (defaults to local SQLite).
