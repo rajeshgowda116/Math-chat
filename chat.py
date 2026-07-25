@@ -4,8 +4,6 @@ from google import genai
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
 
 SYSTEM_PROMPT = """
 You are an expert Mathematics Tutor.
@@ -71,11 +69,19 @@ Final Answer:
 11. If there are multiple methods, use the easiest method first.
 """
 
+
+def get_client():
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY environment variable is not set. Please set it in your environment variables.")
+    return genai.Client(api_key=api_key)
+
+
 def ask_math(question):
+    client = get_client()
     prompt = f"{SYSTEM_PROMPT}\n\nQuestion:\n{question}"
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt,
     )
     return response.text
-
