@@ -4,121 +4,1130 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Math AI Chatbot</title>
-
-    <link rel="stylesheet" href="/static/style.css">
-</head>
-<body>
-
-<div class="container">
-
-    <h1>Math AI Chatbot</h1>
-    <p class="subtitle">Ask any Mathematics Question</p>
-
-    <div id="chat-box"></div>
-
-    <div class="input-area">
-        <textarea
-            id="question"
-            placeholder="Example: Solve x^2 + 5x + 6 = 0"
-        ></textarea>
-
-        <button onclick="sendMessage()">
-            Send
-        </button>
-    </div>
-
-</div>
-
-<script>
-
-async function sendMessage(){
-
-    const question = document.getElementById("question").value.trim();
-
-    if(question===""){
-        alert("Please enter a question");
-        return;
-    }
-
-    const chatBox=document.getElementById("chat-box");
-
-    chatBox.insertAdjacentHTML("beforeend", `
-        <div class="user-message">
-            <strong>You:</strong><br>${escapeHtml(question)}
-        </div>
-    `);
-
-    document.getElementById("question").value="";
-
-    chatBox.scrollTop=chatBox.scrollHeight;
-
-    try{
-
-        const response=await fetch("/chat",{
-
-            method:"POST",
-
-            headers:{
-                "Content-Type":"application/json"
-            },
-
-            body:JSON.stringify({
-                question:question
-            })
-
-        });
-
-        const data=await response.json();
-
-        if(!response.ok){
-            throw new Error(data.detail || "Unable to get an answer.");
+    <style>
+        :root {
+            --bg: #07101f;
+            --panel: rgba(15, 27, 48, 0.86);
+            --panel-soft: rgba(26, 40, 66, 0.78);
+            --line: rgba(139, 158, 196, 0.22);
+            --text: #f5f7ff;
+            --muted: #aeb9ce;
+            --muted-2: #8f9bb3;
+            --violet: #7168ff;
+            --violet-2: #645cf5;
+            --icon: #c4cee3;
+            --shadow: rgba(0, 0, 0, 0.38);
         }
 
-        chatBox.insertAdjacentHTML("beforeend", `
-            <div class="bot-message">
-                <strong>Math Bot:</strong><br>
-                ${escapeHtml(data.answer).replace(/\n/g,"<br>")}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            min-height: 100vh;
+            overflow: hidden;
+            color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background:
+                radial-gradient(circle at 51% 35%, rgba(61, 83, 132, 0.18), transparent 34%),
+                linear-gradient(135deg, #050b16 0%, #0b1629 44%, #091121 100%);
+        }
+
+        button,
+        textarea {
+            font: inherit;
+        }
+
+        .send:disabled {
+            cursor: wait;
+            opacity: 0.72;
+        }
+
+        button {
+            color: inherit;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .app {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            width: calc(100vw - 18px);
+            height: calc(100vh - 18px);
+            margin: 9px;
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 23px;
+            background:
+                linear-gradient(180deg, rgba(15, 28, 50, 0.9), rgba(8, 18, 34, 0.92)),
+                var(--bg);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 22px 70px rgba(0, 0, 0, 0.38);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            min-height: 0;
+            border-right: 1px solid var(--line);
+            background: linear-gradient(180deg, rgba(8, 18, 34, 0.96), rgba(6, 15, 29, 0.98));
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            height: 112px;
+            padding: 20px 24px 18px;
+        }
+
+        .bot-tile {
+            display: grid;
+            place-items: center;
+            width: 84px;
+            height: 84px;
+            flex: 0 0 auto;
+            border: 1px solid rgba(158, 177, 216, 0.36);
+            border-radius: 18px;
+            background: rgba(28, 43, 70, 0.72);
+            box-shadow: inset 0 0 20px rgba(101, 113, 255, 0.08);
+        }
+
+        .brand h1 {
+            font-size: 28px;
+            line-height: 1;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .brand p {
+            margin-top: 8px;
+            color: #837bff;
+            font-size: 20px;
+            line-height: 1;
+            font-weight: 500;
+        }
+
+        .new-chat-wrap {
+            padding: 0 23px 18px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .new-chat {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            width: 100%;
+            height: 70px;
+            border-radius: 11px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 650;
+            background: linear-gradient(135deg, #766bff, #6a62fa);
+            box-shadow: 0 16px 28px rgba(82, 79, 228, 0.19);
+        }
+
+        .sidebar-spacer {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .history-panel {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            padding: 16px 13px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            height: 100%;
+            overflow: auto;
+            padding-right: 4px;
+        }
+
+        .history-empty {
+            padding: 14px 11px;
+            color: var(--muted-2);
+            font-size: 14px;
+            line-height: 1.35;
+        }
+
+        .history-item {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 32px;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+            padding: 0 7px 0 13px;
+            border-radius: 9px;
+            color: #dce4f7;
+            background: transparent;
+        }
+
+        .history-item:hover,
+        .history-item.active {
+            background: rgba(38, 54, 87, 0.86);
+        }
+
+        .history-title {
+            overflow: hidden;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: left;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .delete-chat {
+            display: grid;
+            place-items: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            color: #aebad0;
+            background: transparent;
+            opacity: 0;
+        }
+
+        .history-item:hover .delete-chat,
+        .history-item.active .delete-chat {
+            opacity: 1;
+        }
+
+        .delete-chat:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .mode {
+            padding: 0 23px 18px;
+        }
+
+        .mode-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+            padding: 0 16px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: rgba(10, 21, 40, 0.86);
+        }
+
+        .mode-label {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 16px;
+            font-weight: 650;
+        }
+
+        .toggle {
+            position: relative;
+            width: 46px;
+            height: 28px;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #6860f6, #796fff);
+        }
+
+        .toggle::after {
+            content: "";
+            position: absolute;
+            top: 4px;
+            right: 3px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 10px rgba(255, 255, 255, 0.45);
+        }
+
+        .main {
+            display: grid;
+            grid-template-rows: 112px minmax(0, 1fr);
+            min-width: 0;
+            min-height: 0;
+            background:
+                radial-gradient(circle at 68% 20%, rgba(71, 92, 143, 0.11), transparent 35%),
+                rgba(9, 18, 34, 0.7);
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 34px 0 42px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .headline h2 {
+            font-size: 36px;
+            line-height: 1;
+            font-weight: 830;
+            letter-spacing: 0;
+        }
+
+        .headline h2 span {
+            color: #7771ff;
+        }
+
+        .headline p {
+            margin-top: 9px;
+            color: #b5bed1;
+            font-size: 18px;
+        }
+
+        .help {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            height: 54px;
+            padding: 0 19px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            color: #d7deed;
+            background: rgba(29, 42, 69, 0.82);
+            font-size: 16px;
+            box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.02);
+        }
+
+        .conversation {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+            padding: 18px 27px 122px;
+        }
+
+        .scroll {
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+            padding-right: 1px;
+        }
+
+        .message-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .user-row {
+            justify-content: flex-end;
+            margin: 1px 0 18px;
+        }
+
+        .user-bubble {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: min(735px, 57%);
+            min-height: 72px;
+            padding: 0 29px;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #746bff, #6660f4);
+            box-shadow: 0 15px 36px rgba(76, 73, 224, 0.22);
+        }
+
+        .user-bubble p {
+            font-size: 16px;
+        }
+
+        .user-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.86);
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .avatar {
+            display: grid;
+            place-items: center;
+            width: 52px;
+            height: 52px;
+            margin-top: 12px;
+            flex: 0 0 auto;
+            border: 1px solid rgba(143, 162, 200, 0.18);
+            border-radius: 50%;
+            background: rgba(32, 46, 75, 0.84);
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
+        }
+
+        .assistant-bubble {
+            position: relative;
+            width: min(1095px, calc(100% - 96px));
+            min-height: 0;
+            padding: 24px 28px 48px;
+            border: 1px solid var(--line);
+            border-radius: 21px;
+            background: linear-gradient(145deg, rgba(29, 44, 72, 0.92), rgba(22, 34, 56, 0.92));
+            box-shadow: 0 24px 42px var(--shadow);
+        }
+
+        .empty-state {
+            display: grid;
+            place-items: center;
+            min-height: 100%;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 8px;
+            font-size: 22px;
+            font-weight: 760;
+            color: #f3f6ff;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+        }
+
+        .solution {
+            max-width: 610px;
+            color: #f5f7ff;
+            font-size: 15px;
+            line-height: 1.42;
+        }
+
+        .solution p {
+            margin-bottom: 11px;
+        }
+
+        .solution strong {
+            font-weight: 800;
+        }
+
+        .cursor {
+            display: inline-block;
+            margin-left: 2px;
+            color: #dfe5ff;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .math {
+            display: inline-block;
+            margin: 1px 0 12px;
+            padding: 6px 16px;
+            border: 1px solid rgba(151, 168, 202, 0.21);
+            border-radius: 8px;
+            color: #f1f4ff;
+            font-family: Cambria, "Times New Roman", serif;
+            font-size: 22px;
+            line-height: 1.1;
+            background: rgba(23, 36, 60, 0.72);
+            box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.02);
+        }
+
+        .math.small {
+            font-size: 19px;
+        }
+
+        .math.wide {
+            min-width: 518px;
+        }
+
+        .fraction {
+            display: inline-grid;
+            grid-template-rows: auto auto;
+            vertical-align: middle;
+            text-align: center;
+            line-height: 0.9;
+        }
+
+        .fraction span:first-child {
+            border-bottom: 1px solid currentColor;
+            padding: 0 2px 2px;
+        }
+
+        .fraction span:last-child {
+            padding-top: 2px;
+        }
+
+        .bubble-actions {
+            position: absolute;
+            left: 31px;
+            bottom: 22px;
+            display: flex;
+            gap: 20px;
+            color: #aebad0;
+        }
+
+        .assistant-time {
+            position: absolute;
+            right: 28px;
+            bottom: 22px;
+            color: var(--muted-2);
+            font-size: 14px;
+        }
+
+        .composer {
+            position: absolute;
+            left: 27px;
+            right: 27px;
+            bottom: 12px;
+            margin: 0;
+        }
+
+        .composer-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-height: 76px;
+            padding: 12px 14px 12px 22px;
+            border: 1px solid rgba(145, 164, 201, 0.38);
+            border-radius: 16px;
+            background: rgba(22, 35, 58, 0.82);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 42px;
+            max-height: 120px;
+            flex: 1;
+            resize: none;
+            border: 0;
+            outline: 0;
+            color: #eef3ff;
+            background: transparent;
+            font-size: 16px;
+        }
+
+        textarea::placeholder {
+            color: #9da8bd;
+        }
+
+        .send {
+            display: grid;
+            place-items: center;
+            width: 96px;
+            height: 46px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #766bff, #665ff3);
+            color: #fff;
+            box-shadow: 0 12px 24px rgba(82, 79, 228, 0.2);
+        }
+
+        .notice {
+            padding-top: 6px;
+            color: #9fa9bd;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+        }
+
+        .icon-lg {
+            width: 56px;
+            height: 56px;
+        }
+
+        .icon-sm {
+            width: 20px;
+            height: 20px;
+        }
+
+        .robot-face {
+            fill: rgba(245, 247, 255, 0.04);
+        }
+
+        @media (max-width: 1050px) {
+            body {
+                overflow: auto;
+            }
+
+            .app {
+                grid-template-columns: 1fr;
+                height: auto;
+                min-height: calc(100vh - 18px);
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .main {
+                grid-template-rows: auto 1fr;
+            }
+
+            .topbar {
+                min-height: 126px;
+                padding: 24px;
+            }
+
+            .headline h2 {
+                font-size: 34px;
+            }
+
+            .help {
+                display: none;
+            }
+
+            .user-bubble {
+                width: min(735px, 84%);
+            }
+        }
+
+        @media (max-width: 720px) {
+            .conversation {
+                padding: 18px 14px 128px;
+            }
+
+            .headline h2 {
+                font-size: 29px;
+            }
+
+            .headline p {
+                font-size: 15px;
+            }
+
+            .user-bubble {
+                width: 100%;
+                min-height: 74px;
+                padding: 0 18px;
+                border-radius: 17px;
+            }
+
+            .avatar {
+                display: none;
+            }
+
+            .assistant-bubble {
+                width: 100%;
+                min-height: 0;
+                padding: 22px 18px 56px;
+            }
+
+            .math.wide {
+                min-width: 0;
+                width: 100%;
+            }
+
+            .composer-box {
+                align-items: stretch;
+                flex-direction: column;
+                gap: 14px;
+            }
+
+            .composer {
+                left: 14px;
+                right: 14px;
+                bottom: 14px;
+            }
+
+            .send {
+                justify-self: end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="bot-tile" aria-hidden="true">
+                    <svg class="icon icon-lg" viewBox="0 0 64 64">
+                        <path d="M32 9v6"/>
+                        <path d="M28 9h8"/>
+                        <rect class="robot-face" x="12" y="20" width="40" height="31" rx="11"/>
+                        <rect x="12" y="20" width="40" height="31" rx="11"/>
+                        <path d="M18 33h-5a4 4 0 0 0 0 8h5"/>
+                        <path d="M46 33h5a4 4 0 0 1 0 8h-5"/>
+                        <path d="M24 43h16"/>
+                        <circle cx="25" cy="34" r="2"/>
+                        <circle cx="39" cy="34" r="2"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Math AI</h1>
+                    <p>Chatbot</p>
+                </div>
             </div>
-        `);
 
-        chatBox.scrollTop=chatBox.scrollHeight;
-
-    }
-
-    catch(error){
-
-        chatBox.insertAdjacentHTML("beforeend", `
-            <div class="bot-message error">
-                ${escapeHtml(error.message)}
+            <div class="new-chat-wrap">
+                <button class="new-chat" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                    <span>New Chat</span>
+                </button>
             </div>
-        `);
 
-    }
+            <div class="history-panel">
+                <div class="history-list" id="history-list">
+                    <p class="history-empty">No chats yet.</p>
+                </div>
+            </div>
 
-}
+            <div class="mode">
+                <div class="mode-card">
+                    <div class="mode-label">
+                        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8z"/><path d="M19 3v4M21 5h-4"/></svg>
+                        <span>Dark Mode</span>
+                    </div>
+                    <span class="toggle" aria-hidden="true"></span>
+                </div>
+            </div>
+        </aside>
 
-function escapeHtml(value){
-    return value
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
-}
+        <main class="main">
+            <header class="topbar">
+                <div class="headline">
+                    <h2>Math AI <span>Chatbot</span></h2>
+                    <p>Your personal mathematics tutor. Ask anything!</p>
+                </div>
+                <button class="help" type="button">
+                    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.8 9a2.6 2.6 0 0 1 4.9 1.2c0 1.9-2.7 2.1-2.7 4"/><path d="M12 17.5h.01"/></svg>
+                    <span>How it works?</span>
+                </button>
+            </header>
 
-document.getElementById("question").addEventListener("keypress",function(e){
+            <section class="conversation">
+                <div class="scroll empty-state" id="chat-box">
+                    <div id="empty-state">
+                        <h3>Ask a math question</h3>
+                        <p>Your answer will appear here.</p>
+                    </div>
+                </div>
 
-    if(e.key==="Enter" && !e.shiftKey){
+                <form class="composer" id="chat-form">
+                    <div class="composer-box">
+                        <textarea id="question" rows="2" placeholder="Type your math question here..."></textarea>
+                        <button class="send" type="submit" aria-label="Send message">
+                            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                        </button>
+                    </div>
+                    <p class="notice">This AI can make mistakes. Please verify important information.</p>
+                </form>
+            </section>
+        </main>
+    </div>
 
-        e.preventDefault();
+    <script>
+        const form = document.getElementById("chat-form");
+        const input = document.getElementById("question");
+        const chatBox = document.getElementById("chat-box");
+        const sendButton = form.querySelector(".send");
+        const newChatButton = document.querySelector(".new-chat");
+        const historyList = document.getElementById("history-list");
+        let typingTimer = null;
+        let activeSessionId = null;
 
-        sendMessage();
+        form.addEventListener("submit", sendMessage);
+        newChatButton.addEventListener("click", createNewChat);
+        input.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                form.requestSubmit();
+            }
+        });
+        loadHistory();
 
-    }
+        async function sendMessage(event) {
+            event.preventDefault();
+            const question = input.value.trim();
 
-});
+            if (!question) {
+                input.focus();
+                return;
+            }
 
-</script>
+            appendUserMessage(question);
+            input.value = "";
+            setSending(true);
+            const pendingId = appendPendingMessage();
 
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ question, session_id: activeSessionId })
+                });
+                const data = await readResponse(response);
+
+                if (!response.ok) {
+                    throw new Error(data.detail || "Unable to get an answer.");
+                }
+
+                activeSessionId = data.session_id;
+                replacePendingMessage(pendingId, data.answer);
+                await loadHistory();
+            } catch (error) {
+                replacePendingMessage(pendingId, error.message);
+            } finally {
+                setSending(false);
+                input.focus();
+            }
+        }
+
+        function appendUserMessage(text) {
+            clearEmptyState();
+            chatBox.insertAdjacentHTML("beforeend", `
+                <div class="message-row user-row">
+                    <div class="user-bubble">
+                        <p>${escapeHtml(text)}</p>
+                        <div class="user-meta">
+                            <span>${currentTime()}</span>
+                            <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        </div>
+                    </div>
+                </div>
+            `);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function appendBotMessage(text) {
+            clearEmptyState();
+            chatBox.insertAdjacentHTML("beforeend", `
+                <div class="message-row">
+                    <div class="avatar" aria-hidden="true">
+                        <svg class="icon" viewBox="0 0 64 64">
+                            <path d="M32 12v7"/>
+                            <rect class="robot-face" x="14" y="23" width="36" height="27" rx="9"/>
+                            <rect x="14" y="23" width="36" height="27" rx="9"/>
+                            <path d="M20 34h-5a3.5 3.5 0 0 0 0 7h5"/>
+                            <path d="M44 34h5a3.5 3.5 0 0 1 0 7h-5"/>
+                            <path d="M25 43h14"/>
+                            <circle cx="26" cy="35" r="2"/>
+                            <circle cx="38" cy="35" r="2"/>
+                        </svg>
+                    </div>
+                    <article class="assistant-bubble">
+                        <div class="solution">${escapeHtml(text).replace(/\n/g, "<br>")}</div>
+                        <time class="assistant-time">${currentTime()}</time>
+                    </article>
+                </div>
+            `);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function appendStoredBotMessage(text) {
+            appendBotMessage(text);
+        }
+
+        function appendPendingMessage() {
+            clearEmptyState();
+            const id = `pending-${Date.now()}`;
+            chatBox.insertAdjacentHTML("beforeend", `
+                <div class="message-row" id="${id}">
+                    <div class="avatar" aria-hidden="true">
+                        <svg class="icon" viewBox="0 0 64 64">
+                            <path d="M32 12v7"/>
+                            <rect class="robot-face" x="14" y="23" width="36" height="27" rx="9"/>
+                            <rect x="14" y="23" width="36" height="27" rx="9"/>
+                            <path d="M20 34h-5a3.5 3.5 0 0 0 0 7h5"/>
+                            <path d="M44 34h5a3.5 3.5 0 0 1 0 7h-5"/>
+                            <path d="M25 43h14"/>
+                            <circle cx="26" cy="35" r="2"/>
+                            <circle cx="38" cy="35" r="2"/>
+                        </svg>
+                    </div>
+                    <article class="assistant-bubble">
+                        <div class="solution">Thinking...</div>
+                        <time class="assistant-time">${currentTime()}</time>
+                    </article>
+                </div>
+            `);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return id;
+        }
+
+        function replacePendingMessage(id, text) {
+            const pending = document.getElementById(id);
+            if (!pending) {
+                appendBotMessage(text);
+                return;
+            }
+
+            const solution = pending.querySelector(".solution");
+            typeLikeChatGPT(text, solution);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function typeLikeChatGPT(text, element) {
+            clearTypingTimer();
+            element.textContent = "";
+
+            let index = 0;
+            const cursor = document.createElement("span");
+            cursor.className = "cursor";
+            cursor.textContent = "|";
+            element.appendChild(cursor);
+
+            function typing() {
+                if (index < text.length) {
+                    cursor.remove();
+                    const chunkSize = randomChunkSize();
+                    const chunk = text.slice(index, index + chunkSize);
+
+                    appendTextChunk(chunk, element);
+
+                    element.appendChild(cursor);
+                    index += chunk.length;
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    typingTimer = setTimeout(typing, typingDelay(chunk));
+                    return;
+                }
+
+                cursor.remove();
+                typingTimer = null;
+            }
+
+            typing();
+        }
+
+        function appendTextChunk(chunk, element) {
+            const parts = chunk.split("\n");
+
+            parts.forEach((part, partIndex) => {
+                if (partIndex > 0) {
+                    element.appendChild(document.createElement("br"));
+                }
+
+                if (part) {
+                    element.appendChild(document.createTextNode(part));
+                }
+            });
+        }
+
+        function randomChunkSize() {
+            return 2 + Math.floor(Math.random() * 5);
+        }
+
+        function typingDelay(chunk) {
+            if (chunk.includes("\n")) {
+                return 80;
+            }
+
+            if (/[.,!?;:]$/.test(chunk)) {
+                return 70;
+            }
+
+            return 20 + Math.floor(Math.random() * 40);
+        }
+
+        function clearTypingTimer() {
+            if (typingTimer) {
+                clearTimeout(typingTimer);
+                typingTimer = null;
+            }
+        }
+
+        function setSending(isSending) {
+            sendButton.disabled = isSending;
+        }
+
+        function resetChat() {
+            clearTypingTimer();
+            chatBox.innerHTML = "";
+            chatBox.classList.remove("empty-state");
+        }
+
+        function showEmptyState() {
+            clearTypingTimer();
+            chatBox.innerHTML = `
+                <div id="empty-state">
+                    <h3>Ask a math question</h3>
+                    <p>Your answer will appear here.</p>
+                </div>
+            `;
+            chatBox.classList.add("empty-state");
+            input.value = "";
+            input.focus();
+        }
+
+        async function createNewChat() {
+            clearTypingTimer();
+
+            try {
+                const response = await fetch("/chat/new", { method: "POST" });
+                const data = await readResponse(response);
+
+                if (!response.ok) {
+                    throw new Error(data.detail || "Unable to create a new chat.");
+                }
+
+                activeSessionId = data.session_id;
+                showEmptyState();
+                await loadHistory();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch("/history");
+                const data = await readResponse(response);
+
+                if (!response.ok) {
+                    throw new Error(data.detail || "Unable to load chat history.");
+                }
+
+                renderHistory(data);
+            } catch {
+                historyList.innerHTML = `<p class="history-empty">History is unavailable.</p>`;
+            }
+        }
+
+        function renderHistory(chats) {
+            if (!chats.length) {
+                historyList.innerHTML = `<p class="history-empty">No chats yet.</p>`;
+                return;
+            }
+
+            historyList.innerHTML = chats.map((chat) => `
+                <button class="history-item${chat.id === activeSessionId ? " active" : ""}" type="button" data-session-id="${chat.id}">
+                    <span class="history-title">${escapeHtml(chat.title)}</span>
+                    <span class="delete-chat" data-delete-id="${chat.id}" title="Delete chat" aria-label="Delete chat">
+                        <svg class="icon icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 6h18"/>
+                            <path d="M8 6V4h8v2"/>
+                            <path d="m9 11 .5 7"/>
+                            <path d="m15 11-.5 7"/>
+                            <path d="M6 6l1 15h10l1-15"/>
+                        </svg>
+                    </span>
+                </button>
+            `).join("");
+
+            historyList.querySelectorAll(".history-item").forEach((button) => {
+                button.addEventListener("click", () => {
+                    openChat(Number(button.dataset.sessionId));
+                });
+            });
+
+            historyList.querySelectorAll(".delete-chat").forEach((button) => {
+                button.addEventListener("click", (event) => {
+                    event.stopPropagation();
+                    deleteChat(Number(button.dataset.deleteId));
+                });
+            });
+        }
+
+        async function openChat(sessionId) {
+            clearTypingTimer();
+            activeSessionId = sessionId;
+            await loadHistory();
+
+            try {
+                const response = await fetch(`/history/${sessionId}`);
+                const data = await readResponse(response);
+
+                if (!response.ok) {
+                    throw new Error(data.detail || "Unable to load this chat.");
+                }
+
+                renderConversation(data);
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function renderConversation(messages) {
+            resetChat();
+
+            if (!messages.length) {
+                showEmptyState();
+                return;
+            }
+
+            messages.forEach((message) => {
+                if (message.role === "user") {
+                    appendUserMessage(message.message);
+                } else {
+                    appendStoredBotMessage(message.message);
+                }
+            });
+        }
+
+        async function deleteChat(sessionId) {
+            try {
+                const response = await fetch(`/history/${sessionId}`, { method: "DELETE" });
+
+                if (!response.ok) {
+                    const data = await readResponse(response);
+                    throw new Error(data.detail || "Unable to delete this chat.");
+                }
+
+                if (activeSessionId === sessionId) {
+                    activeSessionId = null;
+                    showEmptyState();
+                }
+
+                await loadHistory();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        async function readResponse(response) {
+            const text = await response.text();
+            if (!text) {
+                return {};
+            }
+
+            try {
+                return JSON.parse(text);
+            } catch {
+                return { detail: text };
+            }
+        }
+
+        function clearEmptyState() {
+            const emptyState = document.getElementById("empty-state");
+            if (emptyState) {
+                emptyState.remove();
+                chatBox.classList.remove("empty-state");
+            }
+        }
+
+        function currentTime() {
+            return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        }
+
+        function escapeHtml(value) {
+            return value
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
 </body>
 </html>
