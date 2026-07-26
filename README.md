@@ -2,7 +2,12 @@
 
 A FastAPI-based mathematics tutor chatbot with a ChatGPT-style interface, animated responses, saved chat history, and dark/light mode.
 
+## Live Demo
+
+🚀 **Live App**: [https://math-chat-7bsv.onrender.com](https://math-chat-7bsv.onrender.com)
+
 ## Features
+
 
 - Math-only AI tutor responses
 - ChatGPT-like typing animation
